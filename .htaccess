@@ -1,0 +1,52 @@
+# SecureVault – Apache Configuration
+Options -Indexes
+ServerSignature Off
+
+# Block direct access to includes (Apache 2.2 and 2.4 syntax, whichever applies)
+<FilesMatch "^(config|header|footer)\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Block direct access to SQL schema/migration files and docs — these
+# should be imported via phpMyAdmin only, never served over the web.
+<FilesMatch "\.(sql|md)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Block access to uploads directory (served only via download.php)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^uploads/ - [F,L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# PHP settings (mod_php is active in the Railway Docker image, so
+# these DO take effect there — kept in sync with Dockerfile's
+# /usr/local/etc/php/conf.d/uploads.ini. On InfinityFree, mod_php
+# isn't loaded, so this block is safely skipped there instead.)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 50M
+    php_value post_max_size 55M
+    php_value max_execution_time 120
+    php_value memory_limit 256M
+</IfModule>

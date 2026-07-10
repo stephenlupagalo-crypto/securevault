@@ -1,0 +1,4 @@
+# Block ALL direct web access to this directory.
+# Files are served only through download.php which decrypts them.
+Order allow,deny
+Deny from all
